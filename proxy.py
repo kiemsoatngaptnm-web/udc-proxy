@@ -223,27 +223,30 @@ import requests
 
 app = Flask(__name__)
 
+# URL API
+UDC_LOGIN_URL = "https://udc.vrain.vn/api/public/v2/login"
 UDC_API_BASE = "https://udc.vrain.vn/api/private/v1"
-LOGIN_URL = f"{UDC_API_BASE}/login"   # ⚠️ Thay URL này theo đúng endpoint login thật sự
 
-USERNAME = "udchcm"   # ⚠️ thay bằng username thật
-PASSWORD = "123456"   # ⚠️ thay bằng password thật
+# Thông tin login (bạn thay bằng tài khoản thật)
+USERNAME = "udchcm"
+PASSWORD = "123456"
 
-# Session toàn cục
+# Tạo session để giữ cookie
 session = requests.Session()
 
 def login_udc():
-    """Đăng nhập vào UDC và lưu sid cookie trong session"""
+    """Đăng nhập UDC, lưu cookie sid vào session"""
     payload = {
         "username": USERNAME,
         "password": PASSWORD
     }
-    resp = session.post(LOGIN_URL, json=payload)
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    resp = session.post(UDC_LOGIN_URL, json=payload, headers=headers)
     resp.raise_for_status()
-
-    # In ra cookie sid để debug
-    print("Cookies sau login:", session.cookies.get_dict())
-
+    print("Login OK. Cookies:", session.cookies.get_dict())
     return session
 
 @app.route("/")
@@ -257,13 +260,15 @@ def udc_data():
     service = request.args.get("service", "ktt")
 
     try:
-        # Nếu chưa login hoặc cookie hết hạn -> login lại
+        # Nếu chưa login thì login
         if "sid" not in session.cookies.get_dict():
             login_udc()
 
         url = f"{UDC_API_BASE}/intervals?from={from_time}&to={to_time}&service={service}"
         resp = session.get(url)
-        if resp.status_code == 401:  # Token hết hạn → login lại
+
+        # Nếu cookie hết hạn thì login lại
+        if resp.status_code == 401:
             login_udc()
             resp = session.get(url)
 
@@ -272,4 +277,3 @@ def udc_data():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
