@@ -318,11 +318,20 @@ def udc_data():
             "x-vrain-user-agent": session.headers.get("x-vrain-user-agent", "")
         }
 
+        # payload = {
+        #     "fromHour": "",
+        #     "from": from_time + " 00:00:00",
+        #     "toHour": "",
+        #     "to": to_time + " 23:59:59",
+        #     "i": "_10m",
+        #     "stationGroups": []
+        # }
+
         payload = {
-            "fromHour": "",
-            "from": from_time + " 00:00:00",
-            "toHour": "",
-            "to": to_time + " 23:59:59",
+            "fromHour": None,
+            "from": from_time,
+            "toHour": None,
+            "to": to_time,
             "i": "_10m",
             "stationGroups": []
         }
