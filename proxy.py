@@ -88,11 +88,11 @@ def udc_data():
     # if not from_time or not to_time:
     #     return jsonify({"error": "Missing params 'from' and 'to'"}), 400
 
-    # Nếu người dùng chỉ nhập ngày -> thêm giờ mặc định
-    if len(from_time) == 10:  # dạng YYYY-MM-DD
-        from_time = from_time + " 00:00:00"
-    if len(to_time) == 10:
-        to_time = to_time + " 23:59:59"
+    # # Nếu người dùng chỉ nhập ngày -> thêm giờ mặc định
+    # if len(from_time) == 10:  # dạng YYYY-MM-DD
+    #     from_time = from_time + " 00:00:00"
+    # if len(to_time) == 10:
+    #     to_time = to_time + " 23:59:59"
 
     try:
         # ensure logged in
@@ -222,6 +222,7 @@ def udc_data():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
