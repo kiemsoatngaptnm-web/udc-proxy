@@ -84,16 +84,7 @@ def udc_data():
     from_time = request.args.get("from")
     to_time = request.args.get("to")
     if not from_time or not to_time:
-        return jsonify({"error": "Missing required params 'from' and 'to' (format YYYY-MM-DD or full datetime)"}), 400
-    # if not from_time or not to_time:
-    #     return jsonify({"error": "Missing params 'from' and 'to'"}), 400
-
-    # # Nếu người dùng chỉ nhập ngày -> thêm giờ mặc định
-    # if len(from_time) == 10:  # dạng YYYY-MM-DD
-    #     from_time = from_time + " 00:00:00"
-    # if len(to_time) == 10:
-    #     to_time = to_time + " 23:59:59"
-
+        return jsonify({"error": "Missing required params 'from' and 'to' (format YYYY-MM-DD or full datetime)"}), 400   
     try:
         # ensure logged in
         if not session.cookies.get("sid"):
@@ -156,72 +147,11 @@ def udc_data():
         app.logger.exception("Unexpected error fetching UDC data")
         return jsonify({"error": str(e)}), 500
 
-# @app.route("/udc-data")
-# def udc_data():
-#     from_time = request.args.get("from")
-#     to_time = request.args.get("to")
-#     if not from_time or not to_time:
-#         return jsonify({"error": "Missing required params 'from' and 'to' (format YYYY-MM-DD or full datetime)"}), 400
-
-#     # Nếu chỉ có YYYY-MM-DD thì thêm giờ mặc định
-#     if len(from_time) == 10:  # dạng "YYYY-MM-DD"
-#         from_time = from_time + " 00:00:00"
-#     if len(to_time) == 10:
-#         to_time = to_time + " 23:59:59"
-
-#     try:
-#         # ensure logged in
-#         if not session.cookies.get("sid"):
-#             login_udc()
-
-#         headers = {
-#             "Content-Type": "application/json",
-#             "Origin": "https://udc.vrain.vn",
-#             "Referer": "https://udc.vrain.vn/station/detail/1h",
-#             "x-org-uuid": ORG_UUID,
-#             "x-vrain-user-agent": session.headers.get("x-vrain-user-agent", "")
-#         }
-
-#         # payload = {
-#         #     "fromHour": "",
-#         #     "from": from_time,
-#         #     "toHour": "",
-#         #     "to": to_time,
-#         #     "i": "_10m",
-#         #     "stationGroups": []
-#         # }
-#         payload = {
-#             "fromHour": "",
-#             "from": from_time + " 00:00:00",
-#             "toHour": "",
-#             "to": to_time + " 23:59:59",
-#             "i": "_10m",
-#             "stationGroups": []
-#         }
-#         resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
-
-#         if resp.status_code == 401:
-#             app.logger.info("UDC data call returned 401 -> re-login and retry once.")
-#             login_udc(force=True)
-#             resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
-
-#         app.logger.info("UDC data response status: %s", resp.status_code)
-#         app.logger.info("UDC data response cookies: %s", resp.cookies.get_dict())
-
-#         resp.raise_for_status()
-#         return jsonify(resp.json())
-
-#     except requests.HTTPError as e:
-#         app.logger.error("HTTPError while fetching UDC data: %s", e)
-#         code = getattr(e, "response", None).status_code if getattr(e, "response", None) else 500
-#         return jsonify({"error": str(e)}), code
-#     except Exception as e:
-#         app.logger.exception("Unexpected error fetching UDC data")
-#         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
