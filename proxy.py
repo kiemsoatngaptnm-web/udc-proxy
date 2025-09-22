@@ -219,34 +219,32 @@
 #         return f"<h3 style='color:red'>Lỗi: {e}</h3>"
 
 # proxy.py
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify
 import requests
 import time
+import logging
 
 app = Flask(__name__)
+app.logger.setLevel(logging.INFO)
 
 # ---------- CẤU HÌNH ----------
 UDC_LOGIN_URL = "https://udc.vrain.vn/api/public/v2/login"
 UDC_API_DETAILS = "https://udc.vrain.vn/api/private/v1/organizations/details"
 
-# Thay bằng tài khoản thực tế nếu bạn muốn tự động login
+# Thay bằng tài khoản thực tế
 USERNAME = "udchcm"
 PASSWORD = "123456"
 ORG_UUID = "b147bbcd-0371-4cab-9052-151660e86ea5"
 
-# Tạo session toàn cục để giữ cookie sid
+# Session toàn cục để giữ cookie sid
 session = requests.Session()
 last_login_ts = 0
 # --------------------------------
 
 def login_udc(force=False):
-    """
-    Login vào UDC, lưu cookie 'sid' vào session.
-    Nếu đã login (< 10 phút), mặc định không login lại trừ khi force=True.
-    """
     global last_login_ts, session
 
-    # tránh login quá thường (rate limiting)
+    # tránh login quá thường (10 phút)
     if not force and time.time() - last_login_ts < 600:
         if session.cookies.get("sid"):
             return session
@@ -257,29 +255,41 @@ def login_udc(force=False):
         "orgUuid": ORG_UUID
     }
 
+    # Headers "giống" trình duyệt (theo bạn cung cấp)
     headers = {
-        "Content-Type": "application/json",
         "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Content-Type": "application/json",
         "Origin": "https://udc.vrain.vn",
         "Referer": "https://udc.vrain.vn/login",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
         "x-org-uuid": ORG_UUID,
-        # Bạn có thể sửa user-agent nếu muốn, nhưng không bắt buộc
-        "x-vrain-user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        "x-vrain-user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
     }
 
-    resp = session.post(UDC_LOGIN_URL, json=payload, headers=headers, timeout=15)
-    # Nếu login trả về 200, server thường set cookie 'sid'
-    if resp.status_code != 200:
-        raise requests.HTTPError(f"Login failed: {resp.status_code} - {resp.text}", response=resp)
+    # set headers on session for subsequent requests
+    session.headers.update(headers)
 
-    # Kiểm tra sid
+    app.logger.info("Attempting UDC login (POST) to %s with payload keys: %s", UDC_LOGIN_URL, list(payload.keys()))
+    resp = session.post(UDC_LOGIN_URL, json=payload, timeout=15)
+
+    app.logger.info("Login response status: %s", resp.status_code)
+    app.logger.info("Login response text (truncated 1000 chars): %s", (resp.text[:1000] + '...') if len(resp.text) > 1000 else resp.text)
+    app.logger.info("Response cookies: %s", resp.cookies.get_dict())
+    app.logger.info("Session cookies after request: %s", session.cookies.get_dict())
+
+    if resp.status_code != 200:
+        # trả về lỗi rõ ràng để log ở Render
+        raise requests.HTTPError(f"UDC login failed: {resp.status_code} - {resp.text}", response=resp)
+
+    # kiểm tra sid cookie
     sid = session.cookies.get("sid") or resp.cookies.get("sid")
     if not sid:
-        # Đôi khi server trả JSON với thông tin khác — in ra debug để kiểm tra
-        raise RuntimeError(f"Login responded 200 but no sid cookie found. response_text={resp.text}")
+        # đôi khi server trả sid trong body — show body để debug
+        raise RuntimeError(f"Login OK but no 'sid' cookie found. Response body: {resp.text}")
 
     last_login_ts = time.time()
-    app.logger.info("UDC login OK, sid stored in session.cookies")
+    app.logger.info("UDC login OK, sid present.")
     return session
 
 
@@ -290,35 +300,24 @@ def home():
 
 @app.route("/udc-data")
 def udc_data():
-    """
-    Lấy dữ liệu từ UDC.
-    Ví dụ:
-      /udc-data?from=2025-09-21&to=2025-09-22
-      /udc-data?from=2025-09-21&to=2025-09-21&service=ktt
-    Note: VrainControl dùng endpoint organizations/details (POST) để lấy dữ liệu.
-    """
     from_time = request.args.get("from")
     to_time = request.args.get("to")
-    service = request.args.get("service", "ktt")
-
     if not from_time or not to_time:
-        return jsonify({"error": "Missing required params 'from' and 'to'. Use format YYYY-MM-DD or full datetime."}), 400
+        return jsonify({"error": "Missing required params 'from' and 'to' (format YYYY-MM-DD or full datetime)"}), 400
 
     try:
-        # Ensure logged in
+        # ensure logged in
         if not session.cookies.get("sid"):
             login_udc()
 
-        # Build headers including sid cookie automatically from session
         headers = {
             "Content-Type": "application/json",
             "Origin": "https://udc.vrain.vn",
             "Referer": "https://udc.vrain.vn/station/detail/1h",
             "x-org-uuid": ORG_UUID,
-            "x-vrain-user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            "x-vrain-user-agent": session.headers.get("x-vrain-user-agent", "")
         }
 
-        # Payload used by VrainControl.py — dùng POST để lấy dữ liệu
         payload = {
             "fromHour": None,
             "from": from_time,
@@ -329,90 +328,26 @@ def udc_data():
         }
 
         resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
+
         if resp.status_code == 401:
-            # cookie hết hạn → login lại 1 lần
+            app.logger.info("UDC data call returned 401 -> re-login and retry once.")
             login_udc(force=True)
             resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
+
+        app.logger.info("UDC data response status: %s", resp.status_code)
+        app.logger.info("UDC data response cookies: %s", resp.cookies.get_dict())
 
         resp.raise_for_status()
         return jsonify(resp.json())
 
     except requests.HTTPError as e:
-        # trả về chi tiết lỗi (không show mật khẩu)
-        app.logger.error("HTTPError: %s", e)
-        return jsonify({"error": f"{e}"}), getattr(e, "response", None).status_code if getattr(e, "response", None) else 500
+        app.logger.error("HTTPError while fetching UDC data: %s", e)
+        code = getattr(e, "response", None).status_code if getattr(e, "response", None) else 500
+        return jsonify({"error": str(e)}), code
     except Exception as e:
-        app.logger.exception("Error fetching udc data")
+        app.logger.exception("Unexpected error fetching UDC data")
         return jsonify({"error": str(e)}), 500
-
-
-# Tùy chọn: dashboard HTML đơn giản để xem dữ liệu nhanh
-@app.route("/dashboard")
-def dashboard():
-    from_time = request.args.get("from")
-    to_time = request.args.get("to")
-    if not from_time or not to_time:
-        return "<p>Use /dashboard?from=YYYY-MM-DD&to=YYYY-MM-DD</p>"
-
-    r = udc_data()
-    if r.status_code != 200:
-        return f"<pre>Error: {r.get_data(as_text=True)}</pre>", r.status_code
-
-    data = r.get_json()
-    # Nếu data không phải list, cố lấy data['stats'] hoặc in toàn bộ
-    rows = None
-    if isinstance(data, dict) and "stats" in data:
-        rows = data["stats"]
-    elif isinstance(data, list):
-        rows = data
-    else:
-        # fallback
-        return f"<pre>{data}</pre>"
-
-    # Hiển thị đơn giản (đối với stats list)
-    template = """
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8"/>
-        <title>UDC Dashboard</title>
-        <style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px;text-align:left}</style>
-      </head>
-      <body>
-        <h3>UDC data: {{from_time}} → {{to_time}}</h3>
-        <table>
-          <thead>
-            <tr>
-              {% for k in headers %}<th>{{k}}</th>{% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in rows %}
-              <tr>
-                {% for k in headers %}
-                  <td>{{ r.get(k, '') }}</td>
-                {% endfor %}
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </body>
-    </html>
-    """
-    # determine headers from first row
-    if rows and isinstance(rows, list) and isinstance(rows[0], dict):
-        headers = list(rows[0].keys())
-    else:
-        headers = []
-
-    return render_template_string(template, rows=rows, headers=headers, from_time=from_time, to_time=to_time)
 
 
 if __name__ == "__main__":
-    # Chạy local cho test
     app.run(host="0.0.0.0", port=5000, debug=True)
-
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
