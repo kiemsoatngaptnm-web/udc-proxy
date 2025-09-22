@@ -83,10 +83,10 @@ def home():
 def udc_data():
     from_time = request.args.get("from")
     to_time = request.args.get("to")
-    # if not from_time or not to_time:
-    #     return jsonify({"error": "Missing required params 'from' and 'to' (format YYYY-MM-DD or full datetime)"}), 400
     if not from_time or not to_time:
-        return jsonify({"error": "Missing params 'from' and 'to'"}), 400
+        return jsonify({"error": "Missing required params 'from' and 'to' (format YYYY-MM-DD or full datetime)"}), 400
+    # if not from_time or not to_time:
+    #     return jsonify({"error": "Missing params 'from' and 'to'"}), 400
 
     # Nếu người dùng chỉ nhập ngày -> thêm giờ mặc định
     if len(from_time) == 10:  # dạng YYYY-MM-DD
@@ -222,6 +222,7 @@ def udc_data():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
