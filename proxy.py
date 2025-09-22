@@ -99,23 +99,23 @@ def udc_data():
             "x-vrain-user-agent": session.headers.get("x-vrain-user-agent", "")
         }
 
-        # payload = {
-        #     "fromHour": "",
-        #     "from": from_time + " 00:00:00",
-        #     "toHour": "",
-        #     "to": to_time + " 23:59:59",
-        #     "i": "_10m",
-        #     "stationGroups": []
-        # }
-
         payload = {
-            "fromHour": None,
-            "from": from_time,
-            "toHour": None,
-            "to": to_time,
+            "fromHour": "",
+            "from": from_time + " 00:00:00",
+            "toHour": "",
+            "to": to_time + " 23:59:59",
             "i": "_10m",
             "stationGroups": []
         }
+
+        # payload = {
+        #     "fromHour": None,
+        #     "from": from_time,
+        #     "toHour": None,
+        #     "to": to_time,
+        #     "i": "_10m",
+        #     "stationGroups": []
+        # }
 
         resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
 
@@ -204,6 +204,7 @@ def udc_data():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
