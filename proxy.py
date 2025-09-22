@@ -227,7 +227,7 @@ app = Flask(__name__)
 UDC_LOGIN_URL = "https://udc.vrain.vn/api/public/v2/login"
 UDC_API_BASE = "https://udc.vrain.vn/api/private/v1"
 
-# Thông tin login (bạn thay bằng tài khoản thật)
+# Thông tin login (thay bằng tài khoản thật của bạn)
 USERNAME = "udchcm"
 PASSWORD = "123456"
 
@@ -242,8 +242,11 @@ def login_udc():
     }
     headers = {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "x-org-uuid": "b147bbcd-0371-4cab-9052-151660e86ea5",  # từ DevTools
+        "x-vrain-user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
     }
+
     resp = session.post(UDC_LOGIN_URL, json=payload, headers=headers)
     resp.raise_for_status()
     print("Login OK. Cookies:", session.cookies.get_dict())
