@@ -89,15 +89,51 @@
 #     port = int(os.environ.get("PORT", 5000))
 #     app.run(host="0.0.0.0", port=port)
 
-# app.py
-from flask import Flask, request, jsonify
+# # app.py
+# from flask import Flask, request, jsonify
+# import requests
+
+# app = Flask(__name__)
+
+# UDC_API_BASE = "https://udc.vrain.vn/api/private/v1"
+
+# # Hàm lấy token UDC
+# def get_udc_token(username="udchcm", password="123456"):
+#     url = f"{UDC_API_BASE}/auth/login"
+#     payload = {"username": username, "password": password}
+#     resp = requests.post(url, json=payload)
+#     resp.raise_for_status()
+#     return resp.json().get("token")
+
+# @app.route("/")
+# def home():
+#     return {"status": "ok", "msg": "Flask chạy trên Render thành công 🎉"}
+
+# @app.route("/udc-data")
+# def udc_data():
+#     """Ví dụ: /udc-data?from=2025-09-21%2000:00:00&to=2025-09-21%2023:59:59&service=ktt"""
+#     from_time = request.args.get("from")
+#     to_time = request.args.get("to")
+#     service = request.args.get("service", "ktt")
+
+#     try:
+#         token = get_udc_token()
+#         headers = {"Authorization": f"Bearer {token}"}
+#         url = f"{UDC_API_BASE}/intervals?from={from_time}&to={to_time}&service={service}"
+#         resp = requests.get(url, headers=headers)
+#         resp.raise_for_status()
+#         return jsonify(resp.json())
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
+from flask import Flask, request, jsonify, render_template_string
 import requests
 
 app = Flask(__name__)
 
 UDC_API_BASE = "https://udc.vrain.vn/api/private/v1"
 
-# Hàm lấy token UDC
+# Hàm lấy token
 def get_udc_token(username="udchcm", password="123456"):
     url = f"{UDC_API_BASE}/auth/login"
     payload = {"username": username, "password": password}
@@ -107,11 +143,10 @@ def get_udc_token(username="udchcm", password="123456"):
 
 @app.route("/")
 def home():
-    return {"status": "ok", "msg": "Flask chạy trên Render thành công 🎉"}
+    return {"status": "ok", "msg": "Flask API chạy trên Render"}
 
 @app.route("/udc-data")
 def udc_data():
-    """Ví dụ: /udc-data?from=2025-09-21%2000:00:00&to=2025-09-21%2023:59:59&service=ktt"""
     from_time = request.args.get("from")
     to_time = request.args.get("to")
     service = request.args.get("service", "ktt")
@@ -125,3 +160,61 @@ def udc_data():
         return jsonify(resp.json())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# 📊 Dashboard HTML
+@app.route("/dashboard")
+def dashboard():
+    from_time = request.args.get("from")
+    to_time = request.args.get("to")
+    service = request.args.get("service", "ktt")
+
+    try:
+        token = get_udc_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        url = f"{UDC_API_BASE}/intervals?from={from_time}&to={to_time}&service={service}"
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+
+        # HTML template đơn giản
+        template = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Bảng dữ liệu UDC</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                th { background-color: #4CAF50; color: white; }
+                tr:nth-child(even) { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <h2>Dữ liệu UDC ({{ from_time }} → {{ to_time }})</h2>
+            <table>
+                <thead>
+                    <tr>
+                        {% for col in data[0].keys() %}
+                            <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                        <tr>
+                            {% for val in row.values() %}
+                                <td>{{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </body>
+        </html>
+        """
+        return render_template_string(template, data=data, from_time=from_time, to_time=to_time)
+
+    except Exception as e:
+        return f"<h3 style='color:red'>Lỗi: {e}</h3>"
+
