@@ -97,6 +97,7 @@ app = Flask(__name__)
 
 UDC_API_BASE = "https://udc.vrain.vn/api/private/v1"
 
+# Hàm lấy token UDC
 def get_udc_token(username="udchcm", password="123456"):
     url = f"{UDC_API_BASE}/auth/login"
     payload = {"username": username, "password": password}
@@ -105,20 +106,22 @@ def get_udc_token(username="udchcm", password="123456"):
     return resp.json().get("token")
 
 @app.route("/")
-def index():
-    return {"status": "ok", "msg": "Flask API chạy trên Render"}
+def home():
+    return {"status": "ok", "msg": "Flask chạy trên Render thành công 🎉"}
 
 @app.route("/udc-data")
 def udc_data():
+    """Ví dụ: /udc-data?from=2025-09-21%2000:00:00&to=2025-09-21%2023:59:59&service=ktt"""
     from_time = request.args.get("from")
     to_time = request.args.get("to")
     service = request.args.get("service", "ktt")
 
-    token = get_udc_token()
-    headers = {"Authorization": f"Bearer {token}"}
-    url = f"{UDC_API_BASE}/intervals?from={from_time}&to={to_time}&service={service}"
-    resp = requests.get(url, headers=headers)
-    return jsonify(resp.json())
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    try:
+        token = get_udc_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        url = f"{UDC_API_BASE}/intervals?from={from_time}&to={to_time}&service={service}"
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
