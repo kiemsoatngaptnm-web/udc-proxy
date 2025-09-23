@@ -80,6 +80,10 @@ def udc_data():
 
             start_date = day
             end_date = start_date + timedelta(days=1)
+            # day = datetime.strptime("2025-09-21", "%Y-%m-%d")
+            T_START = datetime(day.year, day.month, day.day, 0, 0, 0)
+            T_END   = T_START + timedelta(days=1)
+
 
             from_time = start_date.strftime("%Y-%m-%d")
             to_time = end_date.strftime("%Y-%m-%d")
@@ -744,6 +748,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
