@@ -171,7 +171,7 @@ def udc_data():
                 name = station.get("name", "Unknown")
                 depth = station.get("depth", "NA")
                 hhmm = dt.strftime("%H:%M")
-                formatted = f"{hhmm}  {depth}"
+                formatted = f"{hhmm} {depth}"
                 result.setdefault(name, []).append(formatted)
 
 
@@ -748,6 +748,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
