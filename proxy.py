@@ -100,7 +100,7 @@ def udc_data():
             resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
 
         resp.raise_for_status()
-        # data = resp.json()
+        data = resp.json()
 
         # # --------- CHUYỂN ĐỔI DỮ LIỆU ---------
         # result = {}
@@ -129,31 +129,31 @@ def udc_data():
 
         #     result[name] = values
 
-        # return jsonify(result)
-
-        data = resp.json()
-        result = {}
-        
-        # kiểm tra có key stats không
-        if "stats" not in data:
-            app.logger.warning("Không tìm thấy key 'stats' trong JSON: %s", list(data.keys()))
-            return jsonify({"error": "UDC JSON format unexpected", "keys": list(data.keys())}), 500
-        
-        for station in data["stats"]:
-            name = station.get("stationName", "Unknown")
-            values = []
-            for item in station.get("data", []):
-                t = item.get("timePoint") or item.get("time")
-                v = item.get("depth") or item.get("value")
-                # format "HH:MM  value"
-                try:
-                    hhmm = t[11:16]  # lấy giờ:phút từ "YYYY-MM-DD HH:MM:SS"
-                except Exception:
-                    hhmm = str(t)
-                values.append(f"{hhmm}  {v}")
-            result[name] = values
-        
         return jsonify(result)
+
+        # data = resp.json()
+        # result = {}
+        
+        # # kiểm tra có key stats không
+        # if "stats" not in data:
+        #     app.logger.warning("Không tìm thấy key 'stats' trong JSON: %s", list(data.keys()))
+        #     return jsonify({"error": "UDC JSON format unexpected", "keys": list(data.keys())}), 500
+        
+        # for station in data["stats"]:
+        #     name = station.get("stationName", "Unknown")
+        #     values = []
+        #     for item in station.get("data", []):
+        #         t = item.get("timePoint") or item.get("time")
+        #         v = item.get("depth") or item.get("value")
+        #         # format "HH:MM  value"
+        #         try:
+        #             hhmm = t[11:16]  # lấy giờ:phút từ "YYYY-MM-DD HH:MM:SS"
+        #         except Exception:
+        #             hhmm = str(t)
+        #         values.append(f"{hhmm}  {v}")
+        #     result[name] = values
+        
+        # return jsonify(result)
 
     
     except Exception as e:
@@ -361,6 +361,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
