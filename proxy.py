@@ -1,4 +1,72 @@
-from datetime import datetime, timedelta
+
+# proxy.py
+from flask import Flask, request, jsonify
+import requests
+import time
+import logging
+
+app = Flask(__name__)
+app.logger.setLevel(logging.INFO)
+
+# ---------- CẤU HÌNH ----------
+UDC_LOGIN_URL = "https://udc.vrain.vn/api/public/v2/login"
+UDC_API_DETAILS = "https://udc.vrain.vn/api/private/v1/organizations/details"
+
+USERNAME = "udchcm"   # thay bằng tài khoản thật
+PASSWORD = "123456"   # thay bằng mật khẩu thật
+ORG_UUID = "b147bbcd-0371-4cab-9052-151660e86ea5"
+
+# session toàn cục
+session = requests.Session()
+last_login_ts = 0
+# --------------------------------
+
+
+def login_udc(force=False):
+    """Đăng nhập UDC và lưu cookie sid"""
+    global last_login_ts, session
+
+    if not force and time.time() - last_login_ts < 600:
+        if session.cookies.get("sid"):
+            return session
+
+    payload = {
+        "username": USERNAME,
+        "password": PASSWORD,
+        "orgUuid": ORG_UUID
+    }
+
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "Origin": "https://udc.vrain.vn",
+        "Referer": "https://udc.vrain.vn/login",
+        "User-Agent": "Mozilla/5.0",
+        "x-org-uuid": ORG_UUID,
+        "x-vrain-user-agent": "Mozilla/5.0"
+    }
+
+    session.headers.update(headers)
+    resp = session.post(UDC_LOGIN_URL, json=payload, timeout=15)
+
+    if resp.status_code != 200:
+        raise requests.HTTPError(f"UDC login failed: {resp.status_code} - {resp.text}", response=resp)
+
+    sid = session.cookies.get("sid") or resp.cookies.get("sid")
+    if not sid:
+        raise RuntimeError(f"Login OK but no 'sid' cookie found. Body: {resp.text}")
+
+    last_login_ts = time.time()
+    app.logger.info("UDC login OK, sid=%s", sid)
+    return session
+
+
+@app.route("/")
+def home():
+    return {"status": "ok", "msg": "Flask API chạy trên Render 🎉"}
+
+
+
 
 @app.route("/udc-data")
 def udc_data():
@@ -641,6 +709,7 @@ def udc_data():
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
