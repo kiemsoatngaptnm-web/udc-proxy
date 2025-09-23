@@ -144,8 +144,43 @@ def udc_data():
         app.logger.info("UDC data response status: %s", resp.status_code)
         app.logger.info("UDC data response cookies: %s", resp.cookies.get_dict())
 
-        resp.raise_for_status()
-        return jsonify(resp.json())
+        # resp.raise_for_status()
+        # return jsonify(resp.json())
+    resp.raise_for_status()
+    data = resp.json()
+    
+    result = {}
+    
+    # Ví dụ response có dạng:
+    # {
+    #   "stations": [
+    #       {
+    #           "name": "Nguyễn Thiện Thuật",
+    #           "data": [
+    #               {"time": "2025-09-22 16:45:00", "value": 0.0},
+    #               {"time": "2025-09-22 17:00:00", "value": 0.0}
+    #           ]
+    #       },
+    #       ...
+    #   ]
+    # }
+    
+    for station in data.get("stations", []):
+        name = station.get("name", "Unknown")
+        values = []
+        for item in station.get("data", []):
+            t = item.get("time")
+            v = item.get("value")
+            # format "HH:MM  value"
+            try:
+                hhmm = t[11:16]  # lấy giờ:phút từ "YYYY-MM-DD HH:MM:SS"
+            except:
+                hhmm = t
+            values.append(f"{hhmm}  {v}")
+        result[name] = values
+    
+    return jsonify(result)
+
 
     except requests.HTTPError as e:
         app.logger.error("HTTPError while fetching UDC data: %s", e)
