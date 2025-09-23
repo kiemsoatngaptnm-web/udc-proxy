@@ -78,18 +78,12 @@ def udc_data():
             except ValueError:
                 day = datetime.strptime(date_str, "%Y-%m-%d")
 
-            # start_date = day
-            # end_date = start_date + timedelta(days=1)
-
-            # from_time = start_date.strftime("%Y-%m-%d")
-            # to_time = end_date.strftime("%Y-%m-%d")
-        # bắt đầu từ 00:00 ngày được chọn
-            start_date = datetime(day.year, day.month, day.day, 0, 0, 0)
-            # đến đúng 00:00 ngày hôm sau
+            start_date = day
             end_date = start_date + timedelta(days=1)
+
+            from_time = start_date.strftime("%Y-%m-%d")
+            to_time = end_date.strftime("%Y-%m-%d")
         
-            from_time = start_date.strftime("%Y-%m-%d %H:%M:%S")
-            to_time   = end_date.strftime("%Y-%m-%d %H:%M:%S")
 
         else:
             # fallback nếu dùng ?from=YYYY-MM-DD&to=YYYY-MM-DD
@@ -723,6 +717,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
