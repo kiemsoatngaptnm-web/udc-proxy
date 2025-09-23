@@ -99,8 +99,11 @@ def udc_data():
             login_udc(force=True)
             resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
 
+
         resp.raise_for_status()
-        data = resp.json()
+        return jsonify(resp.json())
+        # resp.raise_for_status()
+        # data = resp.json()
 
         # # --------- CHUYỂN ĐỔI DỮ LIỆU ---------
         # result = {}
@@ -129,7 +132,7 @@ def udc_data():
 
         #     result[name] = values
 
-        return jsonify(data)
+        # return jsonify(result)
 
         # data = resp.json()
         # result = {}
@@ -361,6 +364,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
