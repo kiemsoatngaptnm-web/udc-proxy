@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 import requests
 import time
 import logging
+from datetime import datetime
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
@@ -70,7 +71,6 @@ def home():
 
 @app.route("/udc-data")
 def udc_data():
-    # ---- lấy ngày từ query ----
     date_str = request.args.get("date")  # vd: 23/09/2025 hoặc 2025-09-23
     if not date_str:
         return jsonify({"error": "Thiếu tham số 'date' (dd/MM/yyyy hoặc yyyy-MM-dd)"}), 400
@@ -85,7 +85,6 @@ def udc_data():
         from_time = day.replace(hour=0, minute=0, second=0)
         to_time   = day.replace(hour=23, minute=59, second=59)
 
-        # ---- login nếu cần ----
         if not session.cookies.get("sid"):
             login_udc()
 
@@ -115,7 +114,6 @@ def udc_data():
         resp.raise_for_status()
         data = resp.json()
 
-        # ---- xử lý dữ liệu ----
         result = {}
         if "stats" not in data:
             return jsonify({"error": "Không có key 'stats'", "keys": list(data.keys())}), 500
@@ -125,9 +123,8 @@ def udc_data():
             if not time_point:
                 continue
 
-            # chuẩn hoá HH:MM
             try:
-                if " " in time_point:  # kiểu "19:10 21/09"
+                if " " in time_point:  # dạng "19:10 21/09"
                     hhmm = time_point.split()[0]
                 else:
                     hhmm = time_point[11:16]
@@ -709,6 +706,7 @@ def udc_data():
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
