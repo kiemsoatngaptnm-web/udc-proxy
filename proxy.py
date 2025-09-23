@@ -100,37 +100,62 @@ def udc_data():
             resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
 
         resp.raise_for_status()
+        # data = resp.json()
+
+        # # --------- CHUYỂN ĐỔI DỮ LIỆU ---------
+        # result = {}
+        # # kiểm tra xem JSON có gì
+        # if "stations" in data:  # kiểu 1: data trực tiếp
+        #     stations = data["stations"]
+        # elif "data" in data and "stations" in data["data"]:  # kiểu 2: nằm trong data
+        #     stations = data["data"]["stations"]
+        # else:
+        #     app.logger.warning("Không tìm thấy key 'stations' trong JSON: %s", list(data.keys()))
+        #     return jsonify({"error": "Không tìm thấy dữ liệu 'stations'", "raw": data}), 500
+
+        # for st in stations:
+        #     # tên trạm: có thể là "name" hoặc "stationName"
+        #     name = st.get("name") or st.get("stationName") or "Unknown"
+
+        #     values = []
+        #     # dữ liệu có thể là "data" hoặc "stats"
+        #     for item in st.get("data", []) + st.get("stats", []):
+        #         t = item.get("time") or item.get("timePoint")
+        #         v = item.get("value") or item.get("depth")
+        #         if not t or v is None:
+        #             continue
+        #         hhmm = t[11:16] if len(t) >= 16 else t
+        #         values.append(f"{hhmm}  {v}")
+
+        #     result[name] = values
+
+        # return jsonify(result)
+
         data = resp.json()
-
-        # --------- CHUYỂN ĐỔI DỮ LIỆU ---------
         result = {}
-        # kiểm tra xem JSON có gì
-        if "stations" in data:  # kiểu 1: data trực tiếp
-            stations = data["stations"]
-        elif "data" in data and "stations" in data["data"]:  # kiểu 2: nằm trong data
-            stations = data["data"]["stations"]
-        else:
-            app.logger.warning("Không tìm thấy key 'stations' trong JSON: %s", list(data.keys()))
-            return jsonify({"error": "Không tìm thấy dữ liệu 'stations'", "raw": data}), 500
-
-        for st in stations:
-            # tên trạm: có thể là "name" hoặc "stationName"
-            name = st.get("name") or st.get("stationName") or "Unknown"
-
+        
+        # kiểm tra có key stats không
+        if "stats" not in data:
+            app.logger.warning("Không tìm thấy key 'stats' trong JSON: %s", list(data.keys()))
+            return jsonify({"error": "UDC JSON format unexpected", "keys": list(data.keys())}), 500
+        
+        for station in data["stats"]:
+            name = station.get("stationName", "Unknown")
             values = []
-            # dữ liệu có thể là "data" hoặc "stats"
-            for item in st.get("data", []) + st.get("stats", []):
-                t = item.get("time") or item.get("timePoint")
-                v = item.get("value") or item.get("depth")
-                if not t or v is None:
-                    continue
-                hhmm = t[11:16] if len(t) >= 16 else t
+            for item in station.get("data", []):
+                t = item.get("timePoint") or item.get("time")
+                v = item.get("depth") or item.get("value")
+                # format "HH:MM  value"
+                try:
+                    hhmm = t[11:16]  # lấy giờ:phút từ "YYYY-MM-DD HH:MM:SS"
+                except Exception:
+                    hhmm = str(t)
                 values.append(f"{hhmm}  {v}")
-
             result[name] = values
-
+        
         return jsonify(result)
 
+    
     except Exception as e:
         app.logger.exception("Unexpected error fetching UDC data")
         return jsonify({"error": str(e)}), 500
@@ -336,6 +361,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
