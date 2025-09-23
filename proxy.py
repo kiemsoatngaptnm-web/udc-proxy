@@ -148,7 +148,7 @@ def udc_data():
         # return jsonify(resp.json())
         resp.raise_for_status()
         data = resp.json()
-        
+        app.logger.info("UDC raw JSON top-level keys: %s", list(data.keys()))
         result = {}
         
         # Ví dụ response có dạng:
@@ -194,6 +194,7 @@ def udc_data():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
