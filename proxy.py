@@ -121,28 +121,55 @@ def udc_data():
 
         resp.raise_for_status()
         data = resp.json()
+        # result = {}
+
+        # if "stats" not in data:
+        #     app.logger.warning("Không tìm thấy key 'stats' trong JSON: %s", list(data.keys()))
+        #     return jsonify({"error": "UDC JSON format unexpected", "keys": list(data.keys())}), 500
+
+        # for entry in data["stats"]:
+        #     time_point = entry.get("timePoint")
+        #     for station in entry.get("stations", []):
+        #         name = station.get("name", "Unknown")
+        #         depth = station.get("depth", "NA")
+        #         # Format: "HH:MM  value"
+        #         try:
+        #             if " " in time_point:  # ví dụ "19:10 21/09"
+        #                 hhmm = time_point.split()[0]
+        #             else:
+        #                 hhmm = time_point[11:16]
+        #         except Exception:
+        #             hhmm = str(time_point)
+
+        #         formatted = f"{hhmm}  {depth}"
+        #         result.setdefault(name, []).append(formatted)
         result = {}
-
-        if "stats" not in data:
-            app.logger.warning("Không tìm thấy key 'stats' trong JSON: %s", list(data.keys()))
-            return jsonify({"error": "UDC JSON format unexpected", "keys": list(data.keys())}), 500
-
-        for entry in data["stats"]:
+        for entry in data.get("stats", []):
             time_point = entry.get("timePoint")
+            # chuyển timePoint -> datetime
+            dt = None
+            try:
+                # nếu kiểu "19:10 23/09"
+                if " " in time_point and "/" in time_point:
+                    hhmm, dmy = time_point.split()
+                    dt = datetime.strptime(f"{dmy} {hhmm}", "%d/%m %H:%M")
+                    dt = dt.replace(year=day.year)  # bổ sung năm
+                else:
+                    dt = datetime.strptime(time_point, "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                continue
+        
+            # lọc theo khoảng ngày
+            if not (T_START <= dt < T_END):
+                continue
+        
             for station in entry.get("stations", []):
                 name = station.get("name", "Unknown")
                 depth = station.get("depth", "NA")
-                # Format: "HH:MM  value"
-                try:
-                    if " " in time_point:  # ví dụ "19:10 21/09"
-                        hhmm = time_point.split()[0]
-                    else:
-                        hhmm = time_point[11:16]
-                except Exception:
-                    hhmm = str(time_point)
-
+                hhmm = dt.strftime("%H:%M")
                 formatted = f"{hhmm}  {depth}"
                 result.setdefault(name, []).append(formatted)
+
 
         return jsonify(result)
 
@@ -717,6 +744,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
