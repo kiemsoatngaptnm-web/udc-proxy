@@ -96,14 +96,23 @@ def udc_data():
             "x-vrain-user-agent": session.headers.get("x-vrain-user-agent", "")
         }
 
+        # payload = {
+        #     "fromHour": "",
+        #     "from": from_time.strftime("%Y-%m-%d %H:%M:%S"),
+        #     "toHour": "",
+        #     "to": to_time.strftime("%Y-%m-%d %H:%M:%S"),
+        #     "i": "_10m",
+        #     "stationGroups": []
+        # }
         payload = {
             "fromHour": "",
-            "from": from_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "from": from_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "toHour": "",
-            "to": to_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "to": to_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "i": "_10m",
             "stationGroups": []
         }
+
 
         resp = session.post(UDC_API_DETAILS, headers=headers, json=payload, timeout=30)
         if resp.status_code == 401:
@@ -706,6 +715,7 @@ def udc_data():
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
