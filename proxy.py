@@ -144,11 +144,11 @@ def udc_data():
         app.logger.info("UDC data response status: %s", resp.status_code)
         app.logger.info("UDC data response cookies: %s", resp.cookies.get_dict())
 
-        # resp.raise_for_status()
-        # return jsonify(resp.json())
         resp.raise_for_status()
-        data = resp.json()
-        app.logger.info("UDC raw JSON top-level keys: %s", list(data.keys()))
+        return jsonify(resp.json())
+        # resp.raise_for_status()
+        # data = resp.json()
+        # app.logger.info("UDC raw JSON top-level keys: %s", list(data.keys()))
         result = {}
         
         # Ví dụ response có dạng:
@@ -165,21 +165,21 @@ def udc_data():
         #   ]
         # }
         
-        for station in data.get("stations", []):
-            name = station.get("name", "Unknown")
-            values = []
-            for item in station.get("data", []):
-                t = item.get("time")
-                v = item.get("value")
-                # format "HH:MM  value"
-                try:
-                    hhmm = t[11:16]  # lấy giờ:phút từ "YYYY-MM-DD HH:MM:SS"
-                except:
-                    hhmm = t
-                values.append(f"{hhmm}  {v}")
-            result[name] = values
+        # for station in data.get("stations", []):
+        #     name = station.get("name", "Unknown")
+        #     values = []
+        #     for item in station.get("data", []):
+        #         t = item.get("time")
+        #         v = item.get("value")
+        #         # format "HH:MM  value"
+        #         try:
+        #             hhmm = t[11:16]  # lấy giờ:phút từ "YYYY-MM-DD HH:MM:SS"
+        #         except:
+        #             hhmm = t
+        #         values.append(f"{hhmm}  {v}")
+        #     result[name] = values
         
-        return jsonify(result)
+        # return jsonify(result)
 
 
     except requests.HTTPError as e:
@@ -194,6 +194,7 @@ def udc_data():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
