@@ -176,36 +176,36 @@ def udc_data():
 
 
         # return jsonify(result)
-         result = {}
-            for entry in data.get("stats", []):
-                time_point = entry.get("timePoint")
-                try:
-                    if " " in time_point and "/" in time_point:
-                        hhmm, dmy = time_point.split()
-                        dt = datetime.strptime(f"{dmy} {hhmm}", "%d/%m %H:%M")
-                        dt = dt.replace(year=day.year)
-                    else:
-                        dt = datetime.strptime(time_point, "%Y-%m-%d %H:%M:%S")
-                except Exception:
-                    continue
-    
-                if not (T_START <= dt < T_END):
-                    continue
-    
-                for station in entry.get("stations", []):
-                    name = station.get("name", "Unknown")
-                    depth = station.get("depth", "NA")
-                    hhmm = dt.strftime("%H:%M")
-    
-                    if name not in result:
-                        result[name] = f"({name} "
-                    result[name] += f"{hhmm} {depth} "
-    
-            # đóng ngoặc cho từng chuỗi
-            for name in result:
-                result[name] = result[name].strip() + ")"
+        result = {}
+        for entry in data.get("stats", []):
+            time_point = entry.get("timePoint")
+            try:
+                if " " in time_point and "/" in time_point:
+                    hhmm, dmy = time_point.split()
+                    dt = datetime.strptime(f"{dmy} {hhmm}", "%d/%m %H:%M")
+                    dt = dt.replace(year=day.year)
+                else:
+                    dt = datetime.strptime(time_point, "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                continue
 
-            return jsonify(result)
+            if not (T_START <= dt < T_END):
+                continue
+
+            for station in entry.get("stations", []):
+                name = station.get("name", "Unknown")
+                depth = station.get("depth", "NA")
+                hhmm = dt.strftime("%H:%M")
+
+                if name not in result:
+                    result[name] = f"({name} "
+                result[name] += f"{hhmm} {depth} "
+
+        # đóng ngoặc cho từng chuỗi
+        for name in result:
+            result[name] = result[name].strip() + ")"
+
+        return jsonify(result)
 
     except Exception as e:
         app.logger.exception("Unexpected error fetching UDC data")
@@ -778,6 +778,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
