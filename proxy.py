@@ -146,12 +146,22 @@ def udc_data():
                 hhmm = dt.strftime("%H:%M")
                 depth = station.get("depth", "NA")                
                 
-                result.setdefault(name, "")
-                result[name] += f"{hhmm} {depth} "
+        #         result.setdefault(name, "")
+        #         result[name] += f"{hhmm} {depth} "
 
-        # clean chuỗi
-        for name in result:
-            result[name] = result[name].strip()
+        # # clean chuỗi
+        # for name in result:
+        #     result[name] = result[name].strip()
+                if depth == "-" or depth is None:
+                    depth = 0.0
+                else:
+                    try:
+                        depth = float(depth)
+                    except:
+                        depth = 0.0
+        
+                result.setdefault(name, [])
+                result[name].append([hhmm, depth])
         return jsonify(result)
 
     except Exception as e:
@@ -959,6 +969,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
