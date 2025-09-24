@@ -205,16 +205,23 @@ def udc_data():
                 #         depth = 0.0
                
                 
-                if name not in result:
-                    result[name] = f"({name} "
-                    # result[name] = ""
-                result[name] += f"{hhmm} {depth} "
+        #         if name not in result:
+        #             result[name] = f"({name} "
+        #             # result[name] = ""
+        #         result[name] += f"{hhmm} {depth} "
 
-        # đóng ngoặc cho từng chuỗi
-        for name in result:
-            result[name] = result[name].strip() + ")"
+        # # đóng ngoặc cho từng chuỗi
+        # for name in result:
+        #     result[name] = result[name].strip() + ")"
 
-        return jsonify(result)
+        # return jsonify(result)
+                result.setdefault(name, "")
+                    result[name] += f"{hhmm} {depth} "
+
+                # clean chuỗi
+                for name in result:
+                    result[name] = result[name].strip()
+        
 
     except Exception as e:
         app.logger.exception("Unexpected error fetching UDC data")
@@ -787,6 +794,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
