@@ -199,10 +199,11 @@ def udc_data():
                     depth = 0.0
                 else:
                     try:
-                        depth = float(depth)
+                        depth = float(depth)                
+                    except ValueError:
+                        depth = 0.0
                 hhmm = dt.strftime("%H:%M")
-    except ValueError:
-        depth = 0.0
+                
                 if name not in result:
                     result[name] = f"({name} "
                 result[name] += f"{hhmm} {depth} "
@@ -784,6 +785,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
