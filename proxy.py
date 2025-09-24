@@ -175,9 +175,13 @@ def udc_data():
                     except:
                         depth = 0.0
 
-                # 👉 Thay vì chuỗi, ta lưu list [hhmm, depth]
+                # # 👉 Thay vì chuỗi, ta lưu list [hhmm, depth]
+                # result.setdefault(name, [])
+                # result[name].append([hhmm, depth])
+                 # 👉 Lưu dưới dạng chuỗi y chang bạn muốn
+                line = f"{hhmm}  {depth}"        
                 result.setdefault(name, [])
-                result[name].append([hhmm, depth])
+                result[name].append(line)
         return jsonify(result)
 
     except Exception as e:
@@ -985,6 +989,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
