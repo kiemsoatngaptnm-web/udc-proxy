@@ -194,9 +194,15 @@ def udc_data():
 
             for station in entry.get("stations", []):
                 name = station.get("name", "Unknown")
-                depth = station.get("depth", 0.0)
+                depth = station.get("depth", "-")                
+                if depth == "-" or depth is None:
+                    depth = 0.0
+                else:
+                    try:
+                        depth = float(depth)
                 hhmm = dt.strftime("%H:%M")
-
+    except ValueError:
+        depth = 0.0
                 if name not in result:
                     result[name] = f"({name} "
                 result[name] += f"{hhmm} {depth} "
@@ -778,6 +784,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
