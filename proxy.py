@@ -206,8 +206,8 @@ def udc_data():
                
                 
                 if name not in result:
-                    # result[name] = f"({name} "
-                    result[name] = ""
+                    result[name] = f"({name} "
+                    # result[name] = ""
                 result[name] += f"{hhmm} {depth} "
 
         # đóng ngoặc cho từng chuỗi
@@ -787,6 +787,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 
